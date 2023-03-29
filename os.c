@@ -47,7 +47,7 @@ void* phys_to_virt(uint64_t phys_addr)
 	return va;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char **argv) 
 {
 	uint64_t pt = alloc_page_frame();
 
@@ -55,8 +55,9 @@ int main(int argc, char **argv)
 	assert(page_table_query(pt, 0xfffecafeeee) == NO_MAPPING);
 	assert(page_table_query(pt, 0xcafecafeeff) == NO_MAPPING);
 	page_table_update(pt, 0xcafecafeeee, 0xf00d);
-	printf("HI");
-	printf("%lu", page_table_query(pt, 0xcafecafeeee));
+	// printf("%lx\n", page_table_query(pt, 0xcafecafeeee));
+	// fflush(stdout);
+	// fflush(stderr);
 	assert(page_table_query(pt, 0xcafecafeeee) == 0xf00d);
 	assert(page_table_query(pt, 0xfffecafeeee) == NO_MAPPING);
 	assert(page_table_query(pt, 0xcafecafeeff) == NO_MAPPING);
