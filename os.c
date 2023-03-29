@@ -55,9 +55,6 @@ int main(int argc, char **argv)
 	assert(page_table_query(pt, 0xfffecafeeee) == NO_MAPPING);
 	assert(page_table_query(pt, 0xcafecafeeff) == NO_MAPPING);
 	page_table_update(pt, 0xcafecafeeee, 0xf00d);
-	// printf("%lx\n", page_table_query(pt, 0xcafecafeeee));
-	// fflush(stdout);
-	// fflush(stderr);
 	assert(page_table_query(pt, 0xcafecafeeee) == 0xf00d);
 	assert(page_table_query(pt, 0xfffecafeeee) == NO_MAPPING);
 	assert(page_table_query(pt, 0xcafecafeeff) == NO_MAPPING);
