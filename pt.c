@@ -11,26 +11,55 @@
 #define CHILDREN 512 // 2 ^ LEVEL_BITS
 
 uint64_t get_directory_entry(uint64_t vpn, int level);
-uint64_t* ppn_to_address(uint64_t ppn);
+uint64_t ppn_to_address(uint64_t ppn);
 int is_valid(uint64_t ppn);
+uint64_t invert_valid_bit(uint64_t address);
 
 void page_table_update(uint64_t pt, uint64_t vpn, uint64_t ppn) {
     uint64_t directory_entry;
-    uint64_t* page_table_base = phys_to_virt(ppn_to_address(pt));
+    uint64_t next_base;
+    uint64_t* directory_base = phys_to_virt(ppn_to_address(pt));
     for (int i = 0; i < LEVEL_COUNT; i++) {
         directory_entry = get_directory_entry(vpn, i);
+        next_base = directory_base[directory_entry];
+        if (is_valid(next_base) && i != LEVEL_COUNT - 1) {
+            directory_base = phys_to_virt(invert_valid_bit(next_base));
+        } else if (ppn != NO_MAPPING) {
+            uint64_t new_page_number = (i != LEVEL_COUNT - 1) ? alloc_page_frame() : ppn;
+            directory_base[directory_entry] = invert_valid_bit(ppn_to_address(new_page_number));
+        } else {
+            directory_base[directory_entry] = (i == LEVEL_COUNT - 1) ? 0 : next_base; // Destroy mapping if on final level
+            break; // We break if ppn == NO_MAPPING and either we encounter an invalid mapping or destroy the previous mapping.
+        }
     }
 }
 
 
 uint64_t page_table_query(uint64_t pt, uint64_t vpn) {
-    return 0;
+    uint64_t directory_entry;
+    uint64_t next_base;
+    uint64_t* directory_base = phys_to_virt(ppn_to_address(pt));
+    for (int i = 0; i < LEVEL_COUNT; i++) { 
+        directory_entry = get_directory_entry(vpn, i);
+        next_base = directory_base[directory_entry];
+        if (is_valid(next_base)) {
+            if (i == LEVEL_COUNT - 1) {
+                return next_base;
+            } else {
+                directory_base = phys_to_virt(invert_valid_bit(next_base));
+            }
+        } else {
+            break;
+        }
+    }
+    
+    return NO_MAPPING;
 }
 
 /*
     Given a VPN and a level index, extracts the relevant directory (PT level) entry key.
     Does so by shifting the unwanted LSBs right, then bitwise ANDing to get rid of unwanted
-    MSBs, leaving only the LEVEL_BITS bits we need.
+    MSBs, leaving only the LEVEL_BITS bits we need as the non-zero LSBs.
 */
 uint64_t get_directory_entry(uint64_t vpn, int level) {
     int shift_amount = (LEVEL_COUNT - level - 1) * LEVEL_BITS;
@@ -39,11 +68,14 @@ uint64_t get_directory_entry(uint64_t vpn, int level) {
     return directory_entry;
 }
 
-uint64_t* ppn_to_address(uint64_t ppn) {
+uint64_t ppn_to_address(uint64_t ppn) {
     return ppn << OFFSET;
 }
 
 int is_valid(uint64_t ppn) {
-    // 1 iff LSB of ppn is 1
-    return ppn & 1;
+    return ppn & 1; // 1 iff LSB of ppn is 1
+}
+
+uint64_t invert_valid_bit(uint64_t address) {
+    return address ^ 1;
 }
