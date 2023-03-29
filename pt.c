@@ -17,7 +17,7 @@ int is_valid(uint64_t ppn);
 uint64_t invert_valid_bit(uint64_t address);
 
 void page_table_update(uint64_t pt, uint64_t vpn, uint64_t ppn) {
-    printf("PTU: %lx\n\n\n", vpn);
+    printf("PTU: %lx\n\n\n", vpn); //FIXME:
     
     uint64_t directory_entry;
     uint64_t next_base;
@@ -25,13 +25,13 @@ void page_table_update(uint64_t pt, uint64_t vpn, uint64_t ppn) {
 
     for (int i = 0; i < LEVEL_COUNT; i++) {
         directory_entry = get_directory_entry(vpn, i);
-        printf("ENTRY %lx\n", directory_entry);
+        printf("ENTRY %lx\n", directory_entry); //FIXME:
         next_base = directory_base[directory_entry];
 
 
         if (is_valid(next_base) && i != LEVEL_COUNT - 1) {
             directory_base = phys_to_virt(invert_valid_bit(next_base));
-            printf("BASE %lx\n", * directory_base);
+            printf("BASE %lx\n", * directory_base); //FIXME:
         } else if (ppn != NO_MAPPING) {
             uint64_t new_page_number = (i != LEVEL_COUNT - 1) ? alloc_page_frame() : ppn;
             directory_base[directory_entry] = invert_valid_bit(ppn_to_address(new_page_number));
@@ -48,12 +48,12 @@ void page_table_update(uint64_t pt, uint64_t vpn, uint64_t ppn) {
         }
 
     }
-    printf("SET! %lx\n", directory_base[directory_entry]);
+    printf("SET! %lx\n", directory_base[directory_entry]); //FIXME:
 }
 
 
 uint64_t page_table_query(uint64_t pt, uint64_t vpn) {
-    printf("%lx\n\n\n", vpn);
+    printf("%lx\n\n\n", vpn); //FIXME:
     uint64_t directory_entry;
     uint64_t next_base;
     uint64_t* directory_base = phys_to_virt(ppn_to_address(pt));
@@ -65,12 +65,12 @@ uint64_t page_table_query(uint64_t pt, uint64_t vpn) {
         printf("NEXT %lx\n", next_base);
 
         if (!is_valid(next_base)) {
-            printf("BROKE %lx\n", next_base);
+            printf("BROKE %lx\n", next_base); //FIXME:
             break;
         }
 
         if (i == LEVEL_COUNT - 1) {
-            printf("RETURNED %lx\n", next_base >> OFFSET);
+            printf("RETURNED %lx\n", next_base >> OFFSET); //FIXME:
             return next_base >> OFFSET;
         }
 
