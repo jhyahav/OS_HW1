@@ -24,7 +24,6 @@ void page_table_update(uint64_t pt, uint64_t vpn, uint64_t ppn) {
 
     for (int i = 0; i < LEVEL_COUNT; i++) {
         directory_entry = get_directory_entry(vpn, i);
-
         if (ppn == NO_MAPPING) {
             if (i == LEVEL_COUNT - 1) {
                 directory_base[directory_entry] = 0;
@@ -45,25 +44,6 @@ void page_table_update(uint64_t pt, uint64_t vpn, uint64_t ppn) {
         
             directory_base = phys_to_virt(invert_valid_bit(directory_base[directory_entry]));
         }
-
-
-        // if (is_valid(directory_base[directory_entry]) && i != LEVEL_COUNT - 1) {
-        //     directory_base = phys_to_virt(invert_valid_bit(directory_base[directory_entry]));
-        //     printf("BASE %lx\n", * directory_base); //FIXME:
-        // } else if (ppn != NO_MAPPING) {
-        //     uint64_t new_page_number = (i != LEVEL_COUNT - 1) ? alloc_page_frame() : ppn;
-        //     directory_base[directory_entry] = invert_valid_bit(ppn_to_address(new_page_number));
-        //     printf("UPDATE2 %lx\n", directory_base[directory_entry]); //TODO: remove!
-        // } else {
-        //     if (is_valid(directory_base[directory_entry])) {
-        //         directory_base[directory_entry] = (i == LEVEL_COUNT - 1) ? 0 : directory_base[directory_entry]; // Destroy mapping if on final level
-        //         printf("SET %lx\n", directory_base[directory_entry]); //TODO: remove!
-        //     }
-        //     break; // We break if ppn == NO_MAPPING and either we encounter an invalid mapping or destroy the previous mapping.
-        // }
-        // if (i != LEVEL_COUNT - 1 && ppn != NO_MAPPING) {
-        //     directory_base = phys_to_virt(invert_valid_bit(directory_base[directory_entry]));
-        // }
 
     }
     printf("SET! %lx\n", directory_base[directory_entry]); //FIXME:
