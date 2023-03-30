@@ -50,7 +50,7 @@ void* phys_to_virt(uint64_t phys_addr)
 int main(int argc, char **argv) 
 {
 	uint64_t pt = alloc_page_frame();
-
+	/*0th Test (as included in original file)*/
 	assert(page_table_query(pt, 0xcafecafeeee) == NO_MAPPING);
 	assert(page_table_query(pt, 0xfffecafeeee) == NO_MAPPING);
 	assert(page_table_query(pt, 0xcafecafeeff) == NO_MAPPING);
@@ -62,6 +62,7 @@ int main(int argc, char **argv)
 	assert(page_table_query(pt, 0xcafecafeeee) == NO_MAPPING);
 	assert(page_table_query(pt, 0xfffecafeeee) == NO_MAPPING);
 	assert(page_table_query(pt, 0xcafecafeeff) == NO_MAPPING);
+	printf("0th Test: PASSED\n");
 
 	uint64_t new_pt = alloc_page_frame();
 	uint64_t *tmp;

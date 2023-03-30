@@ -1,5 +1,4 @@
 #include "os.h"
-#include <stdio.h> //TODO: remove!
 
 /* 
     Effective bits = Virtual address size - offset size - sign extension size
@@ -10,72 +9,70 @@
 #define LEVEL_BITS 9
 #define OFFSET 12
 #define CHILDREN 512 // 2 ^ LEVEL_BITS
+#define EXIT 1
 
+int handle_no_mapping(uint64_t* directory_base, uint64_t directory_entry, int i);
+int handle_mapping(uint64_t* directory_base, uint64_t directory_entry, uint64_t ppn, int i);
 uint64_t get_directory_entry(uint64_t vpn, int level);
 uint64_t ppn_to_address(uint64_t ppn);
 int is_valid(uint64_t ppn);
 uint64_t invert_valid_bit(uint64_t address);
 
-void page_table_update(uint64_t pt, uint64_t vpn, uint64_t ppn) {
-    printf("\nPTU: %lx\n", vpn); //FIXME:
-    
+void page_table_update(uint64_t pt, uint64_t vpn, uint64_t ppn) {    
     uint64_t directory_entry;
     uint64_t* directory_base = phys_to_virt(ppn_to_address(pt));
-
     for (int i = 0; i < LEVEL_COUNT; i++) {
         directory_entry = get_directory_entry(vpn, i);
         if (ppn == NO_MAPPING) {
-            if (i == LEVEL_COUNT - 1) {
-                directory_base[directory_entry] = 0;
+            if (handle_no_mapping(directory_base, directory_entry, i)) {
                 return;
             }
-            if (!is_valid(directory_base[directory_entry])) {
-                return;
-            }
-            directory_base = phys_to_virt(invert_valid_bit(directory_base[directory_entry]));
         } else {
-            if (i == LEVEL_COUNT - 1) {
-                directory_base[directory_entry] = invert_valid_bit(ppn_to_address(ppn));
+            if (handle_mapping(directory_base, directory_entry, ppn, i)) {
                 return;
             }
-            if (!is_valid(directory_base[directory_entry])) {
-                directory_base[directory_entry] = invert_valid_bit(ppn_to_address(alloc_page_frame()));
-            }
-        
-            directory_base = phys_to_virt(invert_valid_bit(directory_base[directory_entry]));
         }
-
+        directory_base = phys_to_virt(invert_valid_bit(directory_base[directory_entry]));
     }
-    printf("SET! %lx\n", directory_base[directory_entry]); //FIXME:
 }
 
 
 uint64_t page_table_query(uint64_t pt, uint64_t vpn) {
-    printf("\nLOOKUP %lx\n", vpn); //FIXME:
     uint64_t directory_entry;
-    uint64_t next_base;
     uint64_t* directory_base = phys_to_virt(ppn_to_address(pt));
-
     for (int i = 0; i < LEVEL_COUNT; i++) { 
         directory_entry = get_directory_entry(vpn, i);
-        // printf("ENTRY %lx\n", directory_entry);
-        next_base = directory_base[directory_entry];
-        // printf("NEXT %lx\n", next_base);
-
-        if (!is_valid(next_base)) {
-            printf("BROKE %lx\n", next_base); //FIXME:
+        if (!is_valid(directory_base[directory_entry])) {
             break;
         }
-
         if (i == LEVEL_COUNT - 1) {
-            printf("RETURNED %lx\n", next_base >> OFFSET); //FIXME:
-            return next_base >> OFFSET;
+            return directory_base[directory_entry] >> OFFSET;
         }
-        
         directory_base = phys_to_virt(invert_valid_bit(directory_base[directory_entry]));
     }
-    
     return NO_MAPPING;
+}
+
+int handle_no_mapping(uint64_t* directory_base, uint64_t directory_entry, int i) {
+    if (i == LEVEL_COUNT - 1) {
+        directory_base[directory_entry] = 0;
+        return EXIT;
+    }
+    if (!is_valid(directory_base[directory_entry])) {
+        return EXIT;
+    }
+    return 0;
+}
+
+int handle_mapping(uint64_t* directory_base, uint64_t directory_entry, uint64_t ppn, int i) {
+    if (i == LEVEL_COUNT - 1) {
+        directory_base[directory_entry] = invert_valid_bit(ppn_to_address(ppn));
+        return EXIT;
+    }
+    if (!is_valid(directory_base[directory_entry])) {
+        directory_base[directory_entry] = invert_valid_bit(ppn_to_address(alloc_page_frame()));
+    }
+    return 0;   
 }
 
 /*
